@@ -1,7 +1,7 @@
 var fs = require('fs')
 var youtubedl = require('youtube-dl')
 
-var url = process.argv[2]
+var url = process.argv[2].replace('https://', 'http://')
 var clipLength = process.argv[3]
 var filename = process.argv[4]
 
