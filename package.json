@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/data-doge/mementoize#readme",
   "dependencies": {
+    "lodash.range": "^3.2.0",
+    "moment": "^2.14.1",
     "youtube-dl": "^1.11.1"
   }
 }
