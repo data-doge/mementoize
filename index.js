@@ -14,42 +14,44 @@ var video = youtubedl(url, ['--format=18'])
 
 var duration
 
+fs.mkdirSync('tmp')
+
+video.pipe(fs.createWriteStream("./tmp/original.mp4"))
+
 video.on('info', function (info) {
   duration = info.duration
 })
 
 video.on('end', function (info) {
-  fs.mkdir('tmp', function (err) {
+  var tasks = range(duration).map(function (sec) {
+    return function (cb) {
+      var startTime = moment().set({'hour': 0, 'minute': 0, 'second': sec}).format('HH:mm:ss')
+      var cmd = 'ffmpeg -i ./tmp/original.mp4 -ss ' + startTime + ' -t 00:00:01 -async 1 ./tmp/cut-' + sec + '.mp4'
+      exec(cmd, function (err) {
+        if (err) cb(err)
+        console.log('cmd: ', cmd)
+        cb()
+      })
+    }
+  })
+
+  async.parallel(tasks, function (err) {
     if (err) throw err
-    var fxns = range(duration).map(function (sec) {
-      return function (cb) {
-        var startTime = moment().set({'hour': 0, 'minute': 0, 'second': sec}).format('HH:mm:ss')
-        var cmd = 'ffmpeg -i tmp.mp4 -ss ' + startTime + ' -t 00:00:01 -async 1 ./tmp/cut-' + sec + '.mp4'
-        exec(cmd, function (err) {
-          if (err) cb(err)
-          console.log('cmd: ', cmd)
-          cb()
-        })
-      }
+    var filenamesToAppend = range(duration).reverse().map(function (sec) {
+      return 'file ./cut-' + sec + '.mp4'
     })
 
-    async.parallel(fxns, function (err) {
+    var clipListPath = './tmp/clip-list.txt'
+    fs.openSync(clipListPath, 'w+')
+    filenamesToAppend.forEach(function (filenameToAppend) {
+      fs.appendFileSync(clipListPath, filenameToAppend + '\n')
+    })
+
+    var cmd = 'ffmpeg -f concat -i ' + clipListPath + ' -vcodec copy -acodec copy ' + filename
+    console.log(cmd)
+    exec(cmd, function (err) {
       if (err) throw err
-      var filenamesToAppend = range(duration).reverse().map(function (sec) {
-        return 'file ./tmp/cut-' + sec + '.mp4'
-      })
-
-      var clipListPath = './clip-list.txt'
-      fs.openSync(clipListPath, 'w+')
-      filenamesToAppend.forEach(function (filenameToAppend) {
-        fs.appendFileSync(clipListPath, filenameToAppend + '\n')
-      })
-
-      var cmd = 'ffmpeg -f concat -i ' + clipListPath + ' -vcodec copy -acodec copy ' + filename
-      console.log(cmd)
-      exec(cmd)
+      remove.removeSync('./tmp')
     })
   })
 })
-
-video.pipe(fs.createWriteStream("tmp.mp4"))
