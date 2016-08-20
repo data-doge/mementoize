@@ -5,17 +5,23 @@ var range = require('lodash.range')
 var moment = require('moment')
 var async = require('async')
 var remove = require('remove')
+var path = require('path')
+var exists = require('fs-exists-sync')
 
 var url = process.argv[2].replace('https://', 'http://')
 var clipLength = 1
-var filename = "finished.mp4"
+var filename = process.argv[3] || 'output.mp4'
+var finishedFilePath = path.join(process.cwd(), filename)
 
 var video = youtubedl(url, ['--format=18'])
 
 var duration
 
-fs.mkdirSync('tmp')
+if (exists('./tmp')) {
+  remove.removeSync('./tmp')
+}
 
+fs.mkdirSync('tmp')
 video.pipe(fs.createWriteStream("./tmp/original.mp4"))
 
 video.on('info', function (info) {
@@ -29,7 +35,6 @@ video.on('end', function (info) {
       var cmd = 'ffmpeg -i ./tmp/original.mp4 -ss ' + startTime + ' -t 00:00:01 -async 1 ./tmp/cut-' + sec + '.mp4'
       exec(cmd, function (err) {
         if (err) cb(err)
-        console.log('cmd: ', cmd)
         cb()
       })
     }
@@ -47,8 +52,7 @@ video.on('end', function (info) {
       fs.appendFileSync(clipListPath, filenameToAppend + '\n')
     })
 
-    var cmd = 'ffmpeg -f concat -i ' + clipListPath + ' -vcodec copy -acodec copy ' + filename
-    console.log(cmd)
+    var cmd = 'ffmpeg -f concat -i ' + clipListPath + ' -vcodec copy -acodec copy -y ' + finishedFilePath
     exec(cmd, function (err) {
       if (err) throw err
       remove.removeSync('./tmp')
