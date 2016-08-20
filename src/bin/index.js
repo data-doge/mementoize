@@ -11,8 +11,8 @@ import path from 'path'
 import exists from 'fs-exists-sync'
 
 const url = process.argv[2].replace('https://', 'http://')
-const clipLength = 1
 const filename = process.argv[3] || 'output.mp4'
+const clipLength = process.argv[4] || 1
 
 const tmpDir = path.join(__dirname, 'tmp')
 const originalVideoPath = path.join(tmpDir, 'original.mp4')
@@ -32,10 +32,18 @@ video.on('info', (info) => {
 })
 
 video.on('end', (info) => {
-  let tasks = range(duration).map((sec) => {
+  let tasks = range(0, duration, clipLength).map((sec, i, arr) => {
     return (cb) => {
-      let startTime = moment().set({'hour': 0, 'minute': 0, 'second': sec}).format('HH:mm:ss')
-      let cmd = `ffmpeg -i ${originalVideoPath} -ss ${startTime} -t 00:00:01 -async 1 ${path.join(tmpDir, 'cut-' + sec + '.mp4')}`
+      let clipStartTime = moment().set({'hour': 0, 'minute': 0, 'second': sec}).format('HH:mm:ss')
+
+      let clipDuration
+      if (i === arr.length - 1) {
+        clipDuration = moment().set({'hour': 0, 'minute': 0, 'second': duration - sec}).format('HH:mm:ss')
+      } else {
+        clipDuration = moment().set({'hour': 0, 'minute': 0, 'second': clipLength}).format('HH:mm:ss')
+      }
+
+      let cmd = `ffmpeg -i ${originalVideoPath} -ss ${clipStartTime} -t ${clipDuration} -async 1 ${path.join(tmpDir, 'cut-' + sec + '.mp4')}`
       exec(cmd, (err) => {
         if (err) cb(err)
         cb()
@@ -45,7 +53,7 @@ video.on('end', (info) => {
 
   async.parallel(tasks, (err) => {
     if (err) throw err
-    let filenamesToAppend = range(duration).reverse().map((sec) => `file ./cut-${sec}.mp4`)
+    let filenamesToAppend = range(0, duration, clipLength).reverse().map((sec) => `file ./cut-${sec}.mp4`)
 
     fs.openSync(clipListPath, 'w+')
     filenamesToAppend.forEach((filenameToAppend) => {
