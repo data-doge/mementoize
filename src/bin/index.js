@@ -19,6 +19,10 @@ const originalVideoPath = path.join(tmpDir, 'original.mp4')
 const finishedFilePath = path.join(process.cwd(), filename)
 const clipListPath = path.join(tmpDir, 'clip-list.txt')
 
+const formattedSeconds = (seconds) => (
+  moment().set({'hour': 0, 'minute': 0, 'second': seconds}).format('HH:mm:ss')
+)
+
 const video = youtubedl(url, ['--format=18'])
 
 let duration
@@ -34,14 +38,8 @@ video.on('info', (info) => {
 video.on('end', (info) => {
   let tasks = range(0, duration, clipLength).map((sec, i, arr) => {
     return (cb) => {
-      let clipStartTime = moment().set({'hour': 0, 'minute': 0, 'second': sec}).format('HH:mm:ss')
-
-      let clipDuration
-      if (i === arr.length - 1) {
-        clipDuration = moment().set({'hour': 0, 'minute': 0, 'second': duration - sec}).format('HH:mm:ss')
-      } else {
-        clipDuration = moment().set({'hour': 0, 'minute': 0, 'second': clipLength}).format('HH:mm:ss')
-      }
+      let clipStartTime = formattedSeconds(sec)
+      let clipDuration = i === arr.length - 1 ? formattedSeconds(duration - sec) : formattedSeconds(clipLength)
 
       let cmd = `ffmpeg -i ${originalVideoPath} -ss ${clipStartTime} -t ${clipDuration} -async 1 ${path.join(tmpDir, 'cut-' + sec + '.mp4')}`
       exec(cmd, (err) => {
