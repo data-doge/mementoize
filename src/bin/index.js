@@ -29,6 +29,7 @@ let duration
 
 if (exists(tmpDir)) { remove.removeSync(tmpDir) }
 fs.mkdirSync(tmpDir)
+
 video.pipe(fs.createWriteStream(originalVideoPath))
 
 video.on('info', (info) => {
@@ -51,7 +52,7 @@ video.on('end', (info) => {
 
   async.parallel(tasks, (err) => {
     if (err) throw err
-    let filenamesToAppend = range(0, duration, clipLength).reverse().map((sec) => `file ./cut-${sec}.mp4`)
+    let filenamesToAppend = range(0, duration, clipLength).reverse().map((sec) => `file cut-${sec}.mp4`)
 
     fs.openSync(clipListPath, 'w+')
     filenamesToAppend.forEach((filenameToAppend) => {
