@@ -61,10 +61,7 @@ video.on('end', (info) => {
 
   async.parallelLimit(tasks, 20, (err) => {
     if (err) throw err
-    let filenamesToAppend = range(0, duration, clipLength).reverse().map((sec) => {
-      var str = `file ./cut-${sec}.mp4`
-      return str
-    })
+    let filenamesToAppend = range(0, duration, clipLength).reverse().map((sec) => `file cut-${sec}.mp4`)
 
     fs.openSync(clipListPath, 'w+')
     filenamesToAppend.forEach((filenameToAppend) => {
