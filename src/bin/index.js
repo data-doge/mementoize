@@ -23,6 +23,11 @@ const formattedSeconds = (seconds) => (
   moment().set({'hour': 0, 'minute': 0, 'second': seconds}).format('HH:mm:ss')
 )
 
+const hhmmssToSeconds = (hhmmss) => {
+  var arr = hhmmss.split(':').map(function (n) { return +n }).reverse()
+  return arr[0] + (arr[1] || 0) * 60 + (arr[2] || 0) * 60 * 60
+}
+
 const video = youtubedl(url, ['--format=18'])
 
 let duration
@@ -32,24 +37,29 @@ fs.mkdirSync(tmpDir)
 video.pipe(fs.createWriteStream(originalVideoPath))
 
 video.on('info', (info) => {
-  duration = info.duration
+  duration = hhmmssToSeconds(info.duration)
 })
 
+
 video.on('end', (info) => {
+  var clipsProcessed = 0
+
   let tasks = range(0, duration, clipLength).map((sec, i, arr) => {
     return (cb) => {
+      clipsProcessed++
+      console.log((clipsProcessed / arr.length * 100).toFixed(2) + '%')
       let clipStartTime = formattedSeconds(sec)
       let clipDuration = i === arr.length - 1 ? formattedSeconds(duration - sec) : formattedSeconds(clipLength)
 
       let cmd = `ffmpeg -i ${originalVideoPath} -ss ${clipStartTime} -t ${clipDuration} -async 1 ${path.join(tmpDir, 'cut-' + sec + '.mp4')}`
       exec(cmd, (err) => {
-        if (err) cb(err)
+        if (err) { cb(err) }
         cb()
       })
     }
   })
 
-  async.parallel(tasks, (err) => {
+  async.parallelLimit(tasks, 20, (err) => {
     if (err) throw err
     let filenamesToAppend = range(0, duration, clipLength).reverse().map((sec) => `file cut-${sec}.mp4`)
 
