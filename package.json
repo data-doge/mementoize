@@ -1,6 +1,6 @@
 {
   "name": "mementoize",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "",
   "bin": "./lib/bin/index.js",
   "scripts": {
@@ -23,13 +23,16 @@
   },
   "homepage": "https://github.com/data-doge/mementoize#readme",
   "babel": {
-    "presets": ["es2015"]
+    "presets": [
+      "es2015"
+    ]
   },
   "dependencies": {
     "async": "^2.0.1",
     "fs-exists-sync": "^0.1.0",
     "lodash.range": "^3.2.0",
     "moment": "^2.14.1",
+    "progress": "^1.1.8",
     "remove": "^0.1.5",
     "youtube-dl": "^1.11.1"
   },
