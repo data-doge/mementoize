@@ -4,7 +4,7 @@
   "description": "",
   "bin": "./lib/bin/index.js",
   "scripts": {
-    "prepublish": "babel src/bin/index.js --out-file lib/bin/index.js"
+    "prepublish": "mkdir -p lib/bin; touch lib/bin/index.js; babel src/bin/index.js --out-file lib/bin/index.js"
   },
   "repository": {
     "type": "git",
