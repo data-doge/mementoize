@@ -29,7 +29,6 @@ let duration
 
 if (exists(tmpDir)) { remove.removeSync(tmpDir) }
 fs.mkdirSync(tmpDir)
-
 video.pipe(fs.createWriteStream(originalVideoPath))
 
 video.on('info', (info) => {
